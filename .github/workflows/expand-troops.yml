@@ -1,0 +1,35 @@
+name: Expand Steelstorm Troops
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  expand-troops:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Expand troop roster
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          new = """const troops=[
+          ['Rifleman','Balanced soldier',100,25,70,100],['Heavy Infantry','Armoured assault',180,35,45,160],['Sniper','Long-range specialist',80,70,95,220],['Machine Gunner','Suppresses positions',130,40,75,190],['Medic','Restores allies',90,10,55,150],['Engineer','Repairs defenses',110,20,50,140],['Anti-Armor','Vehicle specialist',100,55,65,210],['Commander','Boosts units',150,30,60,300],
+          ['Assault Trooper','Fast frontline attacker',120,38,78,170],['Shield Trooper','Heavy defensive infantry',220,28,40,230],['Recon Scout','Rapid battlefield scout',90,24,115,180],['Combat Engineer','Builds and repairs field defenses',125,30,60,210],['Field Medic','Advanced battlefield support',110,12,68,240],['Mortar Team','Indirect fire support',105,82,48,280],['Drone Operator','Controls reconnaissance drones',100,35,105,320],['Heavy Gunner','High-power suppression unit',210,58,42,330],['Elite Ranger','Highly trained special infantry',160,62,100,420],['Urban Assault','Specialist for city battles',175,55,72,390],['Arctic Trooper','Cold-weather specialist',145,48,76,360],['Desert Trooper','Hot-weather specialist',145,48,76,360],['Paratrooper','Rapid-deployment airborne unit',130,52,92,410],['Shock Trooper','Aggressive breakthrough unit',190,70,65,480],['Exo-Soldier','Powered heavy infantry',300,95,50,750],['Plasma Guard','Advanced energy-weapon infantry',240,110,85,900],['Cyber Commando','Elite technology-enhanced soldier',210,100,125,1100],['Titan Guard','Heavy futuristic infantry',420,135,38,1400],['Storm Legionnaire','Top-tier elite infantry',360,150,105,1700]
+          ];"""
+          pattern = r"const troops=\[.*?\];"
+          s2, n = re.subn(pattern, new, s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('Could not locate troop roster in index.html')
+          p.write_text(s2, encoding='utf-8')
+      - name: Commit troop expansion
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Add expanded troop roster'
+          git push
