@@ -1,0 +1,12 @@
+'use strict';
+(function(){
+ const KEY='steelstorm_economy_v1';
+ const state=JSON.parse(localStorage.getItem(KEY)||'null')||{money:1000,farms:0,mines:0,food:0,ore:0,soldFood:0,soldOre:0,last:Date.now()};
+ const $=id=>document.getElementById(id);
+ function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+ function tick(){const mins=(Date.now()-state.last)/60000;if(mins>=1){state.food+=Math.floor(state.farms*20*mins);state.ore+=Math.floor(state.mines*15*mins);state.last=Date.now();save()}render()}
+ function buy(type){const cost=type==='farm'?250:400;if(state.money<cost)return alert('Not enough money. Sell your stored resources first.');if(type==='farm')state.farms++;else state.mines++;state.money-=cost;save();render()}
+ function sell(type){const key=type==='food'?'food':'ore',qty=state[key];if(qty<1)return alert('Nothing to sell yet.');const price=type==='food'?8:15;state.money+=qty*price;if(type==='food')state.soldFood+=qty;else state.soldOre+=qty;state[key]=0;save();render()}
+ function render(){const box=$('economyPanel');if(!box)return;box.innerHTML=`<div class="card"><h2>💰 ECONOMY MARKET</h2><p>Money: <b>$${Math.floor(state.money).toLocaleString()}</b></p><p>Stored food: <b>${state.food}</b> units</p><p>Stored ore: <b>${state.ore}</b> units</p><p class="muted">Farms and mines produce resources. You must <b>sell</b> those resources to turn them into money.</p><div class="grid"><div><h3>🌾 Farms: ${state.farms}</h3><p>+20 food/min</p><button class="btn primary" id="buyFarm">BUILD FARM • $250</button><button class="btn" id="sellFood" style="margin-top:7px">SELL ALL FOOD • $8/unit</button></div><div><h3>⛏️ Mines: ${state.mines}</h3><p>+15 ore/min</p><button class="btn primary" id="buyMine">BUILD MINE • $400</button><button class="btn" id="sellOre" style="margin-top:7px">SELL ALL ORE • $15/unit</button></div></div></div><div class="card"><h2>📦 SALES LEDGER</h2><p>Food sold: ${state.soldFood} units</p><p>Ore sold: ${state.soldOre} units</p></div>`;$('buyFarm').onclick=()=>buy('farm');$('buyMine').onclick=()=>buy('mine');$('sellFood').onclick=()=>sell('food');$('sellOre').onclick=()=>sell('ore');const mt=$('moneyTop');if(mt)mt.textContent=Math.floor(state.money).toLocaleString()}
+ window.addEventListener('load',()=>{const b=$('buildings');if(b&&!$('economyPanel')){const d=document.createElement('div');d.id='economyPanel';b.prepend(d)}tick();setInterval(tick,10000)});
+})();
