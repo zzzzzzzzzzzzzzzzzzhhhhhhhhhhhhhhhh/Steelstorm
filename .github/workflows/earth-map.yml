@@ -1,0 +1,49 @@
+name: Add Steelstorm Earth Map
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  earth-map:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace fictional home map with realistic Earth map
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker = 'STEELSTORM_EARTH_MAP_V1'
+          if marker in s:
+              raise SystemExit(0)
+          earth = r'''<div class="homeMap earthMap" id="earthMap" role="img" aria-label="Realistic satellite Earth strategic map">
+            <div class="earthMapImage"></div><div class="earthShade"></div>
+            <div class="mapHud"><b>STEELSTORM GLOBAL COMMAND</b><span>REAL EARTH • STRATEGIC LAYER</span></div>
+            <div class="mapLegend"><span>🔵 Player Base</span><span>🟢 Troop Station</span><span>🟠 Defence</span><span>🏭 Building</span><span>⚑ Fictional Faction</span></div>
+            <div class="mapMarker player" style="left:69.4%;top:69.5%">🔵<b>Singapore Base</b></div>
+            <div class="mapMarker troop" style="left:70.2%;top:68.7%">🟢<b>Troop Station</b></div>
+            <div class="mapMarker defence" style="left:69%;top:70.3%">🟠<b>Defence</b></div>
+            <div class="mapMarker building" style="left:69.8%;top:70%">🏭<b>Factory</b></div>
+            <div class="mapMarker fictional" style="left:46%;top:35%">⚑<b>Iron Coast</b></div>
+            <div class="mapMarker fictional" style="left:52%;top:27%">⚑<b>Northstar</b></div>
+            <div class="mapMarker fictional" style="left:28%;top:48%">⚑<b>Arcton</b></div>
+            <div class="mapMarker fictional" style="left:44%;top:62%">⚑<b>Sable Union</b></div>
+            <div class="earthAttribution">Satellite map: Ian Macky / PAT Atlas, public domain</div>
+          </div>'''
+          s, n = re.subn(r'<svg class="homeMap".*?</svg>', earth, s, count=1, flags=re.S)
+          if n != 1: raise SystemExit('Home map SVG not found')
+          css = r'''<style id="STEELSTORM_EARTH_MAP_V1">
+          .earthMap{position:relative;min-height:520px;overflow:hidden;border:1px solid #41566a!important;border-radius:12px;background:#06111b;box-shadow:0 16px 50px rgba(0,0,0,.45);isolation:isolate}.earthMapImage{position:absolute;inset:0;background-image:url('https://upload.wikimedia.org/wikipedia/commons/1/1d/PAT_-_World_satellite_with_borders.jpg');background-size:cover;background-position:center;filter:saturate(1.08) contrast(1.05);z-index:-3}.earthShade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,9,16,.42),rgba(2,9,16,.08) 45%,rgba(2,9,16,.48));z-index:-2;pointer-events:none}.mapHud{position:absolute;left:14px;top:14px;display:flex;flex-direction:column;gap:3px;padding:10px 12px;background:rgba(5,12,19,.78);border:1px solid rgba(210,230,245,.35);border-radius:8px;backdrop-filter:blur(5px);font-size:13px;letter-spacing:1px}.mapHud span{font-size:10px;color:#b8c9d7;letter-spacing:1.5px}.mapLegend{position:absolute;right:12px;top:12px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;max-width:55%;font-size:10px}.mapLegend span{padding:5px 7px;background:rgba(5,12,19,.78);border:1px solid rgba(210,230,245,.25);border-radius:999px}.mapMarker{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:6px;background:rgba(4,10,15,.78);border:1px solid rgba(255,255,255,.28);font-size:18px;box-shadow:0 4px 15px rgba(0,0,0,.45);cursor:pointer;z-index:3;white-space:nowrap}.mapMarker b{font-size:10px}.mapMarker.player{border-color:#66b8ff}.mapMarker.troop{border-color:#62e58b}.mapMarker.defence{border-color:#ffb45c}.mapMarker.building{border-color:#f0d36a}.mapMarker.fictional{border-color:#c28cff}.earthAttribution{position:absolute;left:8px;bottom:6px;font-size:9px;color:rgba(255,255,255,.75);background:rgba(0,0,0,.45);padding:3px 5px;border-radius:4px}@media(max-width:700px){.earthMap{min-height:340px}.mapLegend{max-width:70%;font-size:8px}.mapMarker{font-size:14px}.mapMarker b{font-size:8px}.mapHud{font-size:10px}}
+          </style>'''
+          s = s.replace('</head>', css + '</head>', 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Commit Earth map upgrade
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Add realistic Earth map and strategic map markers"
+          git push
